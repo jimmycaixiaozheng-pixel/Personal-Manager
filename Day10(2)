@@ -1,0 +1,214 @@
+import sqlite3
+
+connection = sqlite3.connect("manager.db")
+cursor = connection.cursor()
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY,
+    name TEXT,
+    age INTEGER,
+    coins INTEGER
+)
+""")
+
+connection.commit()
+print("Database ready")
+
+def check_update():
+    if cursor.rowcount > 0:
+        print("Success")
+    else:
+        print("User not found")
+
+def display_rows(rows):
+    for row in rows:
+        print(f"ID: {row[0]} | Name: {row[1]} | Age: {row[2]} | Coins: {row[3]}")
+
+def show_rows():
+    rows = cursor.fetchall()
+    display_rows(rows)
+
+def get_sort_order():
+    while True:
+        print("Low → High")
+        print("High → Low")
+        sort_choice = input("Choose: ")
+        if sort_choice == "1":
+            return "ASC"
+        elif sort_choice == "2":
+            return "DESC"
+        else:
+            print("Invalid choice")
+
+
+def add_user():
+    try:
+        name = input("Name: ")
+        if not name:
+            print("Name cannot be empty")
+            return
+        age = int(input("Age: "))
+        if age < 0:
+            print("Age cannot be negative")
+            return
+        coins = int(input("Coins: "))
+        if coins < 0:
+            print("Coins cannot be negative")
+            return
+        cursor.execute(
+            "INSERT INTO users (name, age, coins) VALUES (?, ?, ?)",
+            (name, age, coins)
+        )
+        connection.commit()
+        print(f"User {name} added successfully")
+    except ValueError:
+        print("Age and coins must be numbers")
+
+def show_user():
+    while True:
+        print("Show users")
+        print("ID")
+        print("Age")
+        print("Coins")
+
+        choice = input("Choose: ")
+
+        if choice == "1":
+            cursor.execute("SELECT * FROM users")
+            show_rows()
+            break
+
+        elif choice == "2":
+            sort_order = get_sort_order()
+            query = f"SELECT * FROM users ORDER BY age {sort_order}"
+            cursor.execute(query)
+            show_rows()
+            break
+
+        elif choice == "3":
+            sort_order = get_sort_order()
+            query = f"SELECT * FROM users ORDER BY coins {sort_order}"
+            cursor.execute(query)
+            show_rows()
+            break
+            
+        else:
+            print("Invalid choice")
+        
+def update_user():
+    try:
+        user_id = int(input("User ID: "))
+        while True:
+            print("What do you want to update?")
+            print("1. Name ")
+            print("2. Age")
+            print("3. Coin")
+
+            choice = input("Choose: ")
+
+            if choice == "1":
+                new_name = input("What is new name?")
+                if not new_name:
+                    print("Name cannot be empty")
+                    return
+                cursor.execute(
+                    "UPDATE users SET name = ? WHERE id = ?",
+                    (new_name, user_id)
+                )
+                connection.commit()
+                check_update()
+                break
+            
+            elif choice == "2":
+                new_age = int(input("What is new age?"))
+                if new_age < 0:
+                    print("Age cannot be negative")
+                    return
+                cursor.execute(
+                    "UPDATE users SET age = ? WHERE id = ?",
+                    (new_age, user_id)
+                )
+                connection.commit()
+                check_update()
+                break
+
+            elif choice == "3":
+                new_coins = int(input("What is new coins?"))
+                if new_coins < 0:
+                    print("Coins cannot be negative")
+                    return
+                cursor.execute(
+                    "UPDATE users SET coins = ? WHERE id = ?",
+                    (new_coins, user_id)
+                )
+                connection.commit()
+                check_update()
+                break
+           
+            else:
+                print("Invalid choice")
+
+    except ValueError:
+        print("User ID, age and coins must be numbers")
+
+def delete_user():
+    try:
+        user_id = int(input("User ID: "))
+        cursor.execute(
+        "DELETE FROM users WHERE id = ?",
+        (user_id,)
+        )
+        connection.commit()
+        if cursor.rowcount > 0:
+            print("Success")
+        else:
+            print("User not found")
+    except ValueError:
+        print("User ID must be a number")
+
+def search_user():
+    name = input("Name: ")
+    cursor.execute(
+    "SELECT * FROM users WHERE name LIKE ?",
+    (f"%{name}%",)
+    )
+    rows = cursor.fetchall()
+    if len(rows) > 0:
+        for row in rows:
+            print(f"ID: {row[0]} | Name: {row[1]} | Age: {row[2]} | Coins: {row[3]}")
+    else:
+        print("User not Found")
+
+while True:
+    print("====== Personal Manager ======")
+    print("1. Add user")
+    print("2. Show users")
+    print("3. Update user")
+    print("4. Delete user")
+    print("5. Search user")
+    print("6. Exit")
+
+    choice = input("Choose: ")
+
+    if choice == "1":
+        add_user()
+
+    elif choice == "2":
+        show_user()
+
+    elif choice =="3":
+        update_user()
+
+    elif choice == "4":
+        delete_user()
+
+    elif choice == "5":
+        search_user()
+        
+
+    elif choice == "6":
+        print("Goodbye")
+        break
+    
+connection.close()
