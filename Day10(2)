@@ -208,7 +208,7 @@ while True:
         
 
     elif choice == "6":
-        print("Goodbye")
+        print("Goodbye!")
         break
     
 connection.close()
